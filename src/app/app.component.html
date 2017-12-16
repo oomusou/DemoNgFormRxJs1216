@@ -11,9 +11,9 @@
         <label>Phone Number</label>
         <input type="tel" name="phoneNumber" formControlName="phoneNumber" required>
         <div *ngIf="formData.controls?.phoneNumber?.invalid">
-            Error Message
+            {{ formData.get('phoneNumber')?.errors | json }}
         </div>
     </div>
-    <p>{{ formData.controls?.phoneNumber?.errors | json }}</p>
+    <p>Form's Error Message: {{ formData.controls?.phoneNumber?.errors | json }}</p>
     <button type="submit" [disabled]="formData.invalid">Send</button>
 </form>
