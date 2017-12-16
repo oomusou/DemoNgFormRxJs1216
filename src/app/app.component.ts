@@ -1,39 +1,65 @@
-import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
+import {HttpClient, HttpParams} from '@angular/common/http';
+import {AfterViewInit, Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
 import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
+import {Observable} from 'rxjs/Observable';
+import {defer} from 'rxjs/observable/defer';
+import {map, mergeMap, switchMap, tap} from 'rxjs/operators';
+import {debounce} from 'rxjs/operators/debounce';
+import {debounceTime} from 'rxjs/operators/debounceTime';
 
 @Component(
     {selector: 'app-root', templateUrl: './app.component.html', styles: []})
 export class AppComponent implements OnInit, OnChanges {
-  // #region
-  /* 期望的 Form 格式
-  {
-    firstName:'Poy',
-    lastName: 'Chang',
-    phoneNumber: 1234
-  }
-  */
-  // #endregion
-  
-  // 假設資料室從外面進來時，會觸發 ngOnChanges，藉此行為進行 form.reset() 的動作
-  @Input() data = {'firstName': 'Poy', 'lastName': 'Chang', 'phoneNumber': ''};
-  
+  readonly wikiAPI = '//en.wikipedia.org/w/api.php';
+  formData: FormGroup;
+  searchControlValue$ = defer(() => {
+                          if (this.formData) {
+                            return this.formData.get('search').valueChanges;
+                          }
+                        }).pipe(tap(value => console.log(value)));
+                        
+  searchResult$ = this.searchControlValue$.pipe(
+      debounceTime(500),
+      mergeMap(
+          value =>
+              this.http.jsonp(this.searchUrl(value, this.wikiAPI), 'callback')),
+      map((data: any[]) => {
+        if (data) {
+          data.shift();
+          return data[0];
+        }
+      }),
+      tap((value) => {
+        console.log(value);
+      }));
 
-  formData = this.fb.group({
-    'firstName': ['', Validators.required],
-    'lastName': ['', Validators.required],
-    'phoneNumber': ['']
-  });
+
+  searchUrl(term, base) {
+    let params = new HttpParams()
+                     .append('action', 'opensearch')
+                     .append('search', encodeURIComponent(term))
+                     .append('format', 'json');
+    return `${base}?${params.toString()}`
+  }
+
+  ngOnInit(): void {
+    this.formData = new FormGroup({
+      search: new FormControl(
+          '', {validators: [Validators.required], updateOn: 'change'}),
+    });
+  }
+
+  ngOnChanges(): void {}
+
 
   send() {
-    console.log(this.formData.value);
-    console.log(this.formData.getRawValue());
+    this.http.jsonp(this.searchUrl('1234', this.wikiAPI), 'callback')
+        .subscribe(value => {
+          console.log(value);
+        });
   }
-  ngOnChanges(): void {
-    this.formData.reset(this.data);
-  }
-  ngOnInit(): void {}
 
-  constructor(private fb: FormBuilder) {}
+  constructor(private http: HttpClient) {}
 }
 
 // 開發實務心得：變數很多(搭配 RxJS)、方法很少，constructor 只處理注入

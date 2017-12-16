@@ -1,19 +1,15 @@
-<form [formGroup]="formData" novalidate (ngSubmit)="send()">
+<form [formGroup]="formData" novalidate>
     <div>
-        <label>First Name</label>
-        <input type="text" name="firstName" formControlName="firstName" required>
+        <label>Search</label>
+        <input type="text" name="search" formControlName="search" required>
     </div>
-    <div>
-        <label>Last Name</label>
-        <input type="text" name="lastName" formControlName="lastName" required>
-    </div>
-    <div>
-        <label>Phone Number</label>
-        <input type="tel" name="phoneNumber" formControlName="phoneNumber" required>
-        <div *ngIf="formData.controls?.phoneNumber?.invalid">
-            {{ formData.get('phoneNumber')?.errors | json }}
-        </div>
-    </div>
-    <p>Form's Error Message: {{ formData.controls?.phoneNumber?.errors | json }}</p>
-    <button type="submit" [disabled]="formData.invalid">Send</button>
 </form>
+
+
+<pre>{{ searchResult | json }}</pre>
+
+<ul>
+    <li *ngFor="let item of searchResult$ | async">
+        {{ item }}
+    </li>
+</ul>
