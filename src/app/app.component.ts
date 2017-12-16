@@ -1,10 +1,14 @@
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {Component, Input, OnInit} from '@angular/core';
 import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
+import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 import {Observable} from 'rxjs/Observable';
+import {combineLatest} from 'rxjs/observable/combineLatest';
 import {defer} from 'rxjs/observable/defer';
 import {of} from 'rxjs/observable/of';
 import {debounceTime, filter, map, mergeMap, switchMap, tap} from 'rxjs/operators';
+import {shareReplay} from 'rxjs/operators/shareReplay';
+import {startWith} from 'rxjs/operators/startWith';
 
 @Component(
     {selector: 'app-root', templateUrl: './app.component.html', styles: []})
@@ -15,30 +19,34 @@ export class AppComponent implements OnInit {
                           if (this.formData) {
                             return this.formData.get('search').valueChanges;
                           }
-                        }).pipe(tap(value => console.log(value)));
-
-  searchResult$ = this.searchControlValue$.pipe(
-      debounceTime(500), filter((value) => {
-        console.log(this.formData.get('check').value);
-        if (this.formData.get('check').value) {
-          return value;
-        };
-      }),
-      mergeMap(
-          value =>
-              this.http.jsonp(this.searchUrl(value, this.wikiAPI), 'callback')),
-      map((data: any[]) => {
-        if (data) {
-          data.shift();
-          return data[0];
+                        }).pipe(tap(value => console.log('search', value)));
+  checkControlValue$ =
+      defer(() => {
+        if (this.formData) {
+          return this.formData.get('check').valueChanges.pipe(startWith(true));
         }
-      }),
-      tap((value) => {
-        console.log(value);
-      }));
+      }).pipe(tap(value => console.log('send', value)));
+  searchResult$ =
+      combineLatest(
+          this.searchControlValue$, this.checkControlValue$,
+          (search, check) => ({search, check}))
+          .pipe(
+              debounceTime(500), mergeMap(({search, check}) => {
+                if (check) {
+                  return this.http.jsonp(this.searchUrl(search, this.wikiAPI), 'callback');
+                } else {
+                  return of ([]);
+                }
+              }),
+              map((data: any[]) => {
+                if (data.length) {
+                  data.shift();
+                  return data[0];
+                }
+              }),
+              shareReplay());
 
-
-  searchUrl(term, base) {
+  private searchUrl(term, base) {
     let params = new HttpParams()
                      .append('action', 'opensearch')
                      .append('search', encodeURIComponent(term))
@@ -50,15 +58,8 @@ export class AppComponent implements OnInit {
     this.formData = new FormGroup({
       search: new FormControl(
           '', {validators: [Validators.required], updateOn: 'change'}),
-      check: new FormControl(false, {validators: [], updateOn: 'change'}),
+      check: new FormControl(true, {validators: [], updateOn: 'change'}),
     });
-  }
-
-  send() {
-    this.http.jsonp(this.searchUrl('1234', this.wikiAPI), 'callback')
-        .subscribe(value => {
-          console.log(value);
-        });
   }
 
   constructor(private http: HttpClient) {}
