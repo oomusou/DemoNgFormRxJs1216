@@ -1,5 +1,6 @@
 import {Component} from '@angular/core';
-import {FormControl, FormGroup, Validators} from '@angular/forms';
+import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
+
 
 @Component(
     {selector: 'app-root', templateUrl: './app.component.html', styles: []})
@@ -11,16 +12,18 @@ export class AppComponent {
     phoneNumber: 1234
   }
    */
-
-  formData = new FormGroup({
-    'firstName': new FormControl('Default Value', Validators.required),
-    'lastName':
-        new FormControl({value: '', disable: true}, Validators.required),
-    'phoneNumber': new FormControl('')
+  formData = this.fb.group({
+    'firstName': ['Default Value', Validators.required],
+    'lastName': [{value: '', disable: true}, Validators.required],
+    'phoneNumber': ['']
   });
 
   send() {
     console.log(this.formData.value);
     console.log(this.formData.getRawValue());
   }
+
+  constructor(private fb: FormBuilder) {}
 }
+
+// 開發實務心得：變數很多(搭配 RxJS)、方法很少，constructor 只處理注入
