@@ -19,7 +19,8 @@ export class AppComponent {
     'phoneNumber': new FormControl('')
   });
 
-  send(form) {
-    console.log(form.value);
+  send() {
+    console.log(this.formData.value);
+    console.log(this.formData.getRawValue());
   }
 }
