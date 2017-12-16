@@ -1,0 +1,19 @@
+<form #form="ngForm" novalidate (ngSubmit)="send(form)">
+    <div>
+        <label>First Name</label>
+        <input type="text" name="firstName" [(ngModel)]="firstName" required>
+    </div>
+    <div>
+        <label>Last Name</label>
+        <input type="text" name="lastName" [(ngModel)]="lastName" required>
+    </div>
+    <div>
+        <label>Phone Number</label>
+        <input type="tel" name="phoneNumber" [(ngModel)]="phoneNumber" required>
+        <div *ngIf="form.controls?.phoneNumber?.invalid">
+            Error Message
+        </div>
+    </div>
+    <p>{{ form.controls?.phoneNumber?.errors | json }}</p>
+    <button type="submit" [disabled]="form.invalid">Send</button>
+</form>
