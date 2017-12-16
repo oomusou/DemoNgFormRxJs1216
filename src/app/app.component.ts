@@ -1,9 +1,24 @@
 import {Component} from '@angular/core';
-import {FormGroup} from '@angular/forms/src/model';
+import {FormControl, FormGroup, Validators} from '@angular/forms';
 
 @Component(
     {selector: 'app-root', templateUrl: './app.component.html', styles: []})
 export class AppComponent {
+  /* 期望的 Form 格式
+  {
+    firstName:'Chang',
+    lastName: 'Poy',
+    phoneNumber: 1234
+  }
+   */
+
+  formData = new FormGroup({
+    'firstName': new FormControl('Default Value', Validators.required),
+    'lastName':
+        new FormControl({value: '', disable: true}, Validators.required),
+    'phoneNumber': new FormControl('')
+  });
+
   send(form) {
     console.log(form.value);
   }
